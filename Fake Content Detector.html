@@ -1,0 +1,787 @@
+<!DOCTYPE html>
+<!-- saved from url=(0063)file:///C:/Users/HP/Desktop/Fake-News-Detection-main/index.html -->
+<html lang="en"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fake Content Detector</title>
+    <style>
+        :root {
+            --primary-color: #3498db;
+            --secondary-color: #2ecc71;
+            --danger-color: #e74c3c;
+            --warning-color: #f39c12;
+            --dark-color: #2c3e50;
+            --light-color: #ecf0f1;
+            --gray-color: #95a5a6;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #f5f7fa;
+            color: #333;
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            background-color: var(--dark-color);
+            color: white;
+            padding: 20px 0;
+            text-align: center;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+        
+        .subtitle {
+            font-size: 1.1rem;
+            color: var(--light-color);
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .tabs {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 30px;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        .tab-btn {
+            padding: 12px 25px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--gray-color);
+            position: relative;
+            transition: all 0.3s ease;
+        }
+        
+        .tab-btn.active {
+            color: var(--primary-color);
+        }
+        
+        .tab-btn.active::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background-color: var(--primary-color);
+        }
+        
+        .tab-content {
+            display: none;
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+        }
+        
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--dark-color);
+        }
+        
+        textarea, input[type="file"] {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 1rem;
+            transition: border 0.3s ease;
+        }
+        
+        textarea {
+            min-height: 150px;
+            resize: vertical;
+        }
+        
+        textarea:focus, input[type="file"]:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+        
+        .btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            font-size: 1rem;
+            font-weight: 600;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            display: inline-block;
+        }
+        
+        .btn:hover {
+            background-color: #2980b9;
+        }
+        
+        .btn-secondary {
+            background-color: var(--secondary-color);
+        }
+        
+        .btn-secondary:hover {
+            background-color: #27ae60;
+        }
+        
+        .result-container {
+            margin-top: 30px;
+            padding: 20px;
+            border-radius: 8px;
+            display: none;
+        }
+        
+        .result-container.show {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+        
+        .result-title {
+            font-size: 1.3rem;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .result-icon {
+            margin-right: 10px;
+            font-size: 1.5rem;
+        }
+        
+        .result-details {
+            margin-top: 15px;
+        }
+        
+        .confidence-meter {
+            height: 10px;
+            background-color: #eee;
+            border-radius: 5px;
+            margin-top: 10px;
+            overflow: hidden;
+        }
+        
+        .confidence-level {
+            height: 100%;
+            background-color: var(--primary-color);
+            width: 0%;
+            transition: width 1s ease;
+        }
+        
+        .fake-result {
+            background-color: rgba(231, 76, 60, 0.1);
+            border-left: 4px solid var(--danger-color);
+        }
+        
+        .real-result {
+            background-color: rgba(46, 204, 113, 0.1);
+            border-left: 4px solid var(--secondary-color);
+        }
+        
+        .file-preview {
+            margin-top: 15px;
+            max-width: 100%;
+            border-radius: 4px;
+            display: none;
+        }
+        
+        .file-preview.show {
+            display: block;
+        }
+        
+        .combined-results {
+            margin-top: 30px;
+        }
+        
+        .result-item {
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 4px;
+            background-color: white;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+        
+        .result-item-title {
+            font-weight: 600;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        footer {
+            text-align: center;
+            margin-top: 50px;
+            padding: 20px;
+            color: var(--gray-color);
+            font-size: 0.9rem;
+        }
+        
+        @media (max-width: 768px) {
+            .tabs {
+                flex-direction: column;
+            }
+            
+            .tab-btn {
+                width: 100%;
+                text-align: left;
+                padding: 15px;
+            }
+            
+            .tab-btn.active::after {
+                height: 100%;
+                width: 3px;
+                bottom: 0;
+                left: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>Fake Content Detector</h1>
+            <p class="subtitle">Detect fake news, manipulated images, and deepfake videos using advanced machine learning models</p>
+        </div>
+    </header>
+    
+    <div class="container">
+        <div class="tabs">
+            <button class="tab-btn active" data-tab="text-tab">Text Analysis</button>
+            <button class="tab-btn" data-tab="image-tab">Image Analysis</button>
+            <button class="tab-btn" data-tab="video-tab">Video Analysis</button>
+            <button class="tab-btn" data-tab="combined-tab">Combined Analysis</button>
+        </div>
+        
+        <!-- Text Analysis Tab -->
+        <div id="text-tab" class="tab-content active">
+            <form id="text-form">
+                <div class="form-group">
+                    <label for="news-text">Enter news article or text to analyze:</label>
+                    <textarea id="news-text" placeholder="Paste the news article or text content here..."></textarea>
+                </div>
+                <button type="submit" class="btn">Analyze Text</button>
+            </form>
+            
+            <div id="text-result" class="result-container">
+                <h3 class="result-title">
+                    <span class="result-icon">📰</span>
+                    <span id="text-result-title">Analysis Result</span>
+                </h3>
+                <div class="result-details">
+                    <p id="text-result-details">The content appears to be <strong id="text-result-type">unknown</strong>.</p>
+                    <div class="confidence-meter">
+                        <div id="text-confidence-level" class="confidence-level"></div>
+                    </div>
+                    <p>Confidence: <span id="text-confidence-value">0</span>%</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Image Analysis Tab -->
+        <div id="image-tab" class="tab-content">
+            <form id="image-form">
+                <div class="form-group">
+                    <label for="image-upload">Upload an image to analyze:</label>
+                    <input type="file" id="image-upload" accept="image/*">
+                </div>
+                <img id="image-preview" class="file-preview" alt="Image preview">
+                <button type="submit" class="btn">Analyze Image</button>
+            </form>
+            
+            <div id="image-result" class="result-container">
+                <h3 class="result-title">
+                    <span class="result-icon">🖼️</span>
+                    <span id="image-result-title">Analysis Result</span>
+                </h3>
+                <div class="result-details">
+                    <p id="image-result-details">The image appears to be <strong id="image-result-type">unknown</strong>.</p>
+                    <div class="confidence-meter">
+                        <div id="image-confidence-level" class="confidence-level"></div>
+                    </div>
+                    <p>Confidence: <span id="image-confidence-value">0</span>%</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Video Analysis Tab -->
+        <div id="video-tab" class="tab-content">
+            <form id="video-form">
+                <div class="form-group">
+                    <label for="video-upload">Upload a video to analyze:</label>
+                    <input type="file" id="video-upload" accept="video/*">
+                </div>
+                <video id="video-preview" class="file-preview" controls=""></video>
+                <button type="submit" class="btn">Analyze Video</button>
+            </form>
+            
+            <div id="video-result" class="result-container">
+                <h3 class="result-title">
+                    <span class="result-icon">🎥</span>
+                    <span id="video-result-title">Analysis Result</span>
+                </h3>
+                <div class="result-details">
+                    <p id="video-result-details">The video appears to be <strong id="video-result-type">unknown</strong>.</p>
+                    <div class="confidence-meter">
+                        <div id="video-confidence-level" class="confidence-level"></div>
+                    </div>
+                    <p>Confidence: <span id="video-confidence-value">0</span>%</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Combined Analysis Tab -->
+        <div id="combined-tab" class="tab-content">
+            <form id="combined-form">
+                <div class="form-group">
+                    <label for="combined-text">Text Content (optional):</label>
+                    <textarea id="combined-text" placeholder="Paste text content here..."></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label for="combined-image">Upload Image (optional):</label>
+                    <input type="file" id="combined-image" accept="image/*">
+                </div>
+                <img id="combined-image-preview" class="file-preview" alt="Image preview">
+                
+                <div class="form-group">
+                    <label for="combined-video">Upload Video (optional):</label>
+                    <input type="file" id="combined-video" accept="video/*">
+                </div>
+                <video id="combined-video-preview" class="file-preview" controls=""></video>
+                
+                <button type="submit" class="btn btn-secondary">Analyze All Content</button>
+            </form>
+            
+            <div id="combined-result" class="result-container">
+                <h3 class="result-title">
+                    <span class="result-icon">🔍</span>
+                    <span>Comprehensive Analysis Result</span>
+                </h3>
+                <div class="result-details">
+                    <p>The overall content appears to be <strong id="combined-overall-result">unknown</strong>.</p>
+                    <p>Average confidence: <span id="combined-confidence-value">0</span>%</p>
+                    
+                    <div class="combined-results" id="detailed-results">
+                        <!-- Detailed results will be inserted here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <footer>
+        <div class="container">
+            <p>Fake Content Detector © 2023 | Powered by Machine Learning Models</p>
+        </div>
+    </footer>
+    
+    <script>
+        // Tab switching functionality
+        const tabBtns = document.querySelectorAll('.tab-btn');
+        const tabContents = document.querySelectorAll('.tab-content');
+        
+        tabBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const tabId = btn.getAttribute('data-tab');
+                
+                // Remove active class from all buttons and contents
+                tabBtns.forEach(b => b.classList.remove('active'));
+                tabContents.forEach(c => c.classList.remove('active'));
+                
+                // Add active class to clicked button and corresponding content
+                btn.classList.add('active');
+                document.getElementById(tabId).classList.add('active');
+            });
+        });
+        
+        // File preview functionality
+        document.getElementById('image-upload').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    const preview = document.getElementById('image-preview');
+                    preview.src = event.target.result;
+                    preview.classList.add('show');
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+        
+        document.getElementById('video-upload').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const preview = document.getElementById('video-preview');
+                preview.src = URL.createObjectURL(file);
+                preview.classList.add('show');
+            }
+        });
+        
+        document.getElementById('combined-image').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    const preview = document.getElementById('combined-image-preview');
+                    preview.src = event.target.result;
+                    preview.classList.add('show');
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+        
+        document.getElementById('combined-video').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const preview = document.getElementById('combined-video-preview');
+                preview.src = URL.createObjectURL(file);
+                preview.classList.add('show');
+            }
+        });
+        
+        // Form submission handlers
+        document.getElementById('text-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const text = document.getElementById('news-text').value.trim();
+            
+            if (!text) {
+                alert('Please enter some text to analyze');
+                return;
+            }
+            
+            analyzeText(text);
+        });
+        
+        document.getElementById('image-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const fileInput = document.getElementById('image-upload');
+            
+            if (!fileInput.files.length) {
+                alert('Please select an image file');
+                return;
+            }
+            
+            analyzeImage(fileInput.files[0]);
+        });
+        
+        document.getElementById('video-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const fileInput = document.getElementById('video-upload');
+            
+            if (!fileInput.files.length) {
+                alert('Please select a video file');
+                return;
+            }
+            
+            analyzeVideo(fileInput.files[0]);
+        });
+        
+        document.getElementById('combined-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const text = document.getElementById('combined-text').value.trim();
+            const imageFile = document.getElementById('combined-image').files[0];
+            const videoFile = document.getElementById('combined-video').files[0];
+            
+            if (!text && !imageFile && !videoFile) {
+                alert('Please provide at least one type of content to analyze');
+                return;
+            }
+            
+            analyzeCombined(text, imageFile, videoFile);
+        });
+        
+        // Analysis functions
+        function analyzeText(text) {
+            showLoading('text');
+            
+            fetch('/predict_text', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ text: text })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+                
+                const resultContainer = document.getElementById('text-result');
+                const resultType = document.getElementById('text-result-type');
+                const resultTitle = document.getElementById('text-result-title');
+                const resultDetails = document.getElementById('text-result-details');
+                const confidenceLevel = document.getElementById('text-confidence-level');
+                const confidenceValue = document.getElementById('text-confidence-value');
+                
+                // For text analysis, we'll assume a fixed confidence since the backend doesn't provide it
+                const confidence = 85; // Default confidence for text analysis
+                
+                if (data.prediction.includes('Fake')) {
+                    resultContainer.className = 'result-container show fake-result';
+                    resultType.textContent = 'fake';
+                    resultTitle.textContent = 'Potential Fake News Detected';
+                    resultDetails.textContent = 'This text contains characteristics commonly found in fake news.';
+                } else {
+                    resultContainer.className = 'result-container show real-result';
+                    resultType.textContent = 'authentic';
+                    resultTitle.textContent = 'Authentic News Content';
+                    resultDetails.textContent = 'This text appears to be authentic news content.';
+                }
+                
+                confidenceLevel.style.width = `${confidence}%`;
+                confidenceValue.textContent = confidence;
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred during analysis: ' + error.message);
+            });
+        }
+        
+        function analyzeImage(imageFile) {
+            showLoading('image');
+            
+            const formData = new FormData();
+            formData.append('image', imageFile);
+            
+            fetch('/predict_image', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+                
+                const resultContainer = document.getElementById('image-result');
+                const resultType = document.getElementById('image-result-type');
+                const resultTitle = document.getElementById('image-result-title');
+                const resultDetails = document.getElementById('image-result-details');
+                const confidenceLevel = document.getElementById('image-confidence-level');
+                const confidenceValue = document.getElementById('image-confidence-value');
+                
+                const confidence = Math.round(data.confidence * 100);
+                
+                if (data.prediction.includes('Fake')) {
+                    resultContainer.className = 'result-container show fake-result';
+                    resultType.textContent = 'manipulated';
+                    resultTitle.textContent = 'Potential Image Manipulation Detected';
+                    resultDetails.textContent = 'This image shows signs of digital manipulation or alteration.';
+                } else {
+                    resultContainer.className = 'result-container show real-result';
+                    resultType.textContent = 'authentic';
+                    resultTitle.textContent = 'Authentic Image';
+                    resultDetails.textContent = 'This image appears to be authentic with no signs of manipulation.';
+                }
+                
+                confidenceLevel.style.width = `${confidence}%`;
+                confidenceValue.textContent = confidence;
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred during analysis: ' + error.message);
+            });
+        }
+        
+        function analyzeVideo(videoFile) {
+            showLoading('video');
+            
+            const formData = new FormData();
+            formData.append('video', videoFile);
+            
+            fetch('/predict_video', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+                
+                const resultContainer = document.getElementById('video-result');
+                const resultType = document.getElementById('video-result-type');
+                const resultTitle = document.getElementById('video-result-title');
+                const resultDetails = document.getElementById('video-result-details');
+                const confidenceLevel = document.getElementById('video-confidence-level');
+                const confidenceValue = document.getElementById('video-confidence-value');
+                
+                const confidence = Math.round(data.confidence * 100);
+                
+                if (data.prediction.includes('Deepfake')) {
+                    resultContainer.className = 'result-container show fake-result';
+                    resultType.textContent = 'deepfake';
+                    resultTitle.textContent = 'Potential Deepfake Video Detected';
+                    resultDetails.textContent = 'This video shows characteristics consistent with deepfake technology.';
+                } else {
+                    resultContainer.className = 'result-container show real-result';
+                    resultType.textContent = 'authentic';
+                    resultTitle.textContent = 'Authentic Video';
+                    resultDetails.textContent = 'This video appears to be authentic with no signs of manipulation.';
+                }
+                
+                confidenceLevel.style.width = `${confidence}%`;
+                confidenceValue.textContent = confidence;
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred during analysis: ' + error.message);
+            });
+        }
+        
+        function analyzeCombined(text, imageFile, videoFile) {
+            showLoading('combined');
+            
+            const formData = new FormData();
+            if (text) formData.append('text', text);
+            if (imageFile) formData.append('image', imageFile);
+            if (videoFile) formData.append('video', videoFile);
+            
+            fetch('/predict_combined', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+                
+                const resultContainer = document.getElementById('combined-result');
+                const overallResult = document.getElementById('combined-overall-result');
+                const confidenceValue = document.getElementById('combined-confidence-value');
+                const detailedResults = document.getElementById('detailed-results');
+                
+                // Clear previous detailed results
+                detailedResults.innerHTML = '';
+                
+                // Set overall result
+                if (data.overall_prediction.includes('Fake')) {
+                    resultContainer.className = 'result-container show fake-result';
+                    overallResult.textContent = 'potentially fake';
+                } else {
+                    resultContainer.className = 'result-container show real-result';
+                    overallResult.textContent = 'authentic';
+                }
+                
+                const confidence = Math.round(data.overall_confidence * 100);
+                confidenceValue.textContent = confidence;
+                
+                // Add detailed results
+                if (data.detailed_results.text) {
+                    const textResult = createResultItem('Text Analysis', 
+                        data.detailed_results.text.prediction, 
+                        data.detailed_results.text.confidence ? Math.round(data.detailed_results.text.confidence * 100) : 85);
+                    detailedResults.appendChild(textResult);
+                }
+                
+                if (data.detailed_results.image) {
+                    const imageResult = createResultItem('Image Analysis', 
+                        data.detailed_results.image.prediction, 
+                        Math.round(data.detailed_results.image.confidence * 100));
+                    detailedResults.appendChild(imageResult);
+                }
+                
+                if (data.detailed_results.video) {
+                    const videoResult = createResultItem('Video Analysis', 
+                        data.detailed_results.video.prediction, 
+                        Math.round(data.detailed_results.video.confidence * 100));
+                    detailedResults.appendChild(videoResult);
+                }
+                
+                resultContainer.classList.add('show');
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred during analysis: ' + error.message);
+            });
+        }
+        
+        function createResultItem(title, prediction, confidence) {
+            const item = document.createElement('div');
+            item.className = 'result-item';
+            
+            const isFake = prediction.includes('Fake') || prediction.includes('Deepfake');
+            
+            const titleEl = document.createElement('div');
+            titleEl.className = 'result-item-title';
+            titleEl.innerHTML = `
+                <span>${title}</span>
+                <span style="color: ${isFake ? 'var(--danger-color)' : 'var(--secondary-color)'}">
+                    ${prediction}
+                </span>
+            `;
+            
+            const confidenceEl = document.createElement('div');
+            confidenceEl.className = 'confidence-meter';
+            confidenceEl.innerHTML = `
+                <div class="confidence-level" style="width: ${confidence}%; 
+                    background-color: ${isFake ? 'var(--danger-color)' : 'var(--secondary-color)'}"></div>
+            `;
+            
+            const confidenceText = document.createElement('p');
+            confidenceText.textContent = `Confidence: ${confidence}%`;
+            
+            item.appendChild(titleEl);
+            item.appendChild(confidenceEl);
+            item.appendChild(confidenceText);
+            
+            return item;
+        }
+        
+        function showLoading(type) {
+            const resultContainer = document.getElementById(`${type}-result`);
+            resultContainer.className = 'result-container show';
+            
+            const resultTitle = document.getElementById(`${type}-result-title`);
+            resultTitle.textContent = 'Analyzing...';
+            
+            const resultDetails = document.getElementById(`${type}-result-details`);
+            resultDetails.textContent = 'Processing content, please wait...';
+            
+            const confidenceLevel = document.getElementById(`${type}-confidence-level`);
+            confidenceLevel.style.width = '0%';
+            
+            const confidenceValue = document.getElementById(`${type}-confidence-value`);
+            confidenceValue.textContent = '0';
+        }
+    </script>
+
+</body></html>
